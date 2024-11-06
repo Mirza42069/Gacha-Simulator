@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
 :root
 {
-  --base-clr: #11121a;
-  --line-clr: #b2b0fc;
-  --hover-clr: #222533;
-  --text-clr: #ffffff;
-  --accent-clr: #b7bdff;
-  --seconday-text-clr: #ffe6e6;
+  --base-clr: #F0F8FF;
+  --line-clr: #68669c;
+  --hover-clr: #ececec;
+  --text-clr: #222;
+  --accent-clr: #3700b8;
+  --seconday-text-clr: #0c0b11;
 }
 *{
   margin:0;
