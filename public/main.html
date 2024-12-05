@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Home</title>
+</head>
+<body>
+  <nav id="sidebar">
+	<div class="sidebar-content">
+      <ul>
+        <li>
+          <span class="logo">Gacha Simulator</span>
+          <!-- <button onclick=toggleSidebar() id="toggle-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg>          
+          </button> -->
+        </li>
+
+        <li class="active">
+          <a href="index.html">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M160-240q-33 0-56.5-23.5T80-320v-320q0-33 23.5-56.5T160-720h640q33 0 56.5 23.5T880-640v320q0 33-23.5 56.5T800-240H160Zm0-80h640v-320H160v320Zm120-40h80v-80h80v-80h-80v-80h-80v80h-80v80h80v80Zm300 0q25 0 42.5-17.5T640-420q0-25-17.5-42.5T580-480q-25 0-42.5 17.5T520-420q0 25 17.5 42.5T580-360Zm120-120q25 0 42.5-17.5T760-540q0-25-17.5-42.5T700-600q-25 0-42.5 17.5T640-540q0 25 17.5 42.5T700-480ZM160-320v-320 320Z"/></svg>
+            <span>Wish</span>
+          </a>
+        </li>
+        <li>
+          <a href="Inventory.html">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-80q-33 0-56.5-23.5T120-160v-451q-18-11-29-28.5T80-680v-120q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v120q0 23-11 40.5T840-611v451q0 33-23.5 56.5T760-80H200Zm0-520v440h560v-440H200Zm-40-80h640v-120H160v120Zm200 280h240v-80H360v80Zm120 20Z"/></svg>
+            <span>Inventory</span>
+          </a>
+        </li>
+        <li>
+          <a href="Account.html">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-246q54-53 125.5-83.5T480-360q83 0 154.5 30.5T760-246v-514H200v514Zm280-194q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm69-80h422q-44-39-99.5-59.5T480-280q-56 0-112.5 20.5T269-200Zm211-320q-25 0-42.5-17.5T420-580q0-25 17.5-42.5T480-640q25 0 42.5 17.5T540-580q0 25-17.5 42.5T480-520Zm0 17Z"/></svg>
+            <span>Account</span>
+          </a>
+        </li>
+      </ul>
+	</div>
+	<div class="user-info">
+      <span>Logged in as</span>
+      <span class="username" id="usernameLoggedIn"></span>
+    </div>
+  </nav> 
+  <main>
+	  <!-- <input type="text" id="usernameInput" placeholder="Enter username">
+	  <button id="setUsernameButton">Login</button> -->
+	  <div class="gacha-container">
+		<div id="resultDisplay" style="margin-top:40px;">
+			Klik tombol di bawah untuk memulai roll!
+		</div>
+		<button class="ripple-button" id="toggleButton" style="margin-top:10px; margin-bottom:50px;">
+			Gacha sekarang boss~!
+			<div class="ripple-container" id="toggleRipples">
+			  <div class="ripple"></div>
+			  <div class="ripple"></div>
+			</div>
+		</button>
+	  </div>
+      <!-- <div class="container" style="border:none; justify-content:center; align-items:center; display:flex; height:10vh;">
+      </div> -->
+	  <div class="container" style="padding-bottom:28px;">
+        <h2 style="margin-top:0; margin-bottom:20px;">Pull History</h2>
+		<div id="history"></div>
+      </div>
+      <div class="container">
+        <h2>⭐Informasi dan Rate Gacha⭐</h2><br>
+		<div style="margin-left:15px;">
+			<h3>Distribusi Probabilitas</h3>
+			<ul><li>⭐ Units: 80% chance</li><li>⭐⭐ Units: 17% chance</li><li>⭐⭐⭐ Units: 3% chance</li></ul><br>
+			<h3>Cara Kerja</h3>
+			<ol>
+				<li>10 pulls akan langsung di save oleh server ketika menekan tombol gacha</li>
+				<li>Server pertama akan melakukan rolling rarity tier (1⭐, 2⭐, 3⭐)</li>
+				<li>Setelah itu server baru akan melakukan rolling pada poll rarity tersebut</li>
+				<li>Semua unit pada rarity tier yang sama akan memiliki probabilitas yang sama</li>
+				<li>Apabila user tidak sengaja disconnect dari server, pull tidak akan hilang!</li>
+			</ol><br>
+			<h3>Poll Rarity</h3>
+			<p style="color:LightGray;">Dapat juga dilihat pada halaman Inventory</p>
+			<h4>⭐⭐⭐Legendary Units (3%)</h4>
+			<ul>
+				<li>Twin Monarchs (Gemini) - Dual rulers with synchronized abilities</li>
+				<li>Solar King (Leo) - Majestic leader empowering all allies</li>
+				<li>Balance King (Libra) - Master of cosmic equilibrium</li>
+
+			</ul><br>
+			<h4>⭐⭐Elite Units (7%)</h4>
+			<ul>
+				<li>Twin Berserkers (Aries) - Synchronized warrior duo</li>
+				<li>Earth Weaver (Taurus) - Master of terrain manipulation</li>
+				<li>Mirror Mages (Gemini) - Spell-duplicating mystics</li>
+
+			</ul><br>
+			<h4>⭐Standard Units (80%)</h4>
+			<p>Selain yang tertulis di atas</p><br>
+			<h3>Catatan Penting dan Pro Tips</h3>
+			<ul>
+				<li>Tiap pull bisa mendapatkan copy dari unit tersebut</li>
+				<li>Perhatikan synergy tiap unit pada set mereka masing-masing</li>
+				<li>Rarity yang lebih tinggi dapat dikalahkan oleh rarity lebih rendah</li>
+				<li>Selesaikan tiap set untuk mendapatkan special team bonuses</li>
+				<li>Akan ada set-set baru pada beberapa update yang akan datang</li>
+				<li>Jangan lupa untuk mengikuti event-event limited</li>
+			</ul>
+		</div>
+	  </div>
+    </main>
+	
+    <script type="text/javascript" src="script.js" defer></script>
+  </body>
+  </html>

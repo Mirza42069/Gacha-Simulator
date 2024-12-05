@@ -289,6 +289,82 @@ app.put('/pull-history/:id', async (req, res) => {
     }
 });
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  });
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+const bcrypt = require('bcrypt');
+
+// Registration route
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+  
+    let client;
+    try {
+      client = new MongoClient(uri);
+      await client.connect();
+  
+      const database = client.db(dbName);
+      const users = database.collection('users');
+  
+      // Check if user already exists
+      const existingUser = await users.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+  
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Save the user to the database
+      const result = await users.insertOne({ username, password: hashedPassword });
+      res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
+    } catch (error) {
+      console.error('Error registering user:', error);
+      res.status(500).json({ message: 'Error registering user' });
+    } finally {
+      if (client) await client.close();
+    }
+  });
+  
+  // Login route
+  app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+  
+    let client;
+    try {
+      client = new MongoClient(uri);
+      await client.connect();
+  
+      const database = client.db(dbName);
+      const users = database.collection('users');
+  
+      // Find the user in the database
+      const user = await users.findOne({ username });
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid username or password' });
+      }
+  
+      // Compare the entered password with the hashed password
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(400).json({ message: 'Invalid username or password' });
+      }
+  
+      // Send success response
+      res.status(200).json({ message: 'Login successful' });
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ message: 'Error during login' });
+    } finally {
+      if (client) await client.close();
+    }
+  });
+
+  
 // Start the server
 const port = 3000;
 app.listen(port, () => {

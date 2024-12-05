@@ -55,6 +55,7 @@ body{
 	display: flex;
 	flex-direction: column;
 	gap: 0.25em;
+  /* color: #e8eaed; */
 }
 
 #sidebar ul{
