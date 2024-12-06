@@ -47,71 +47,88 @@ app.use(express.json());
 const uri = "mongodb://localhost:27017";
 const dbName = "user_flow_demo";
 
-/*
-// Detailed logging to show the exact flow
-async function createUser(client, userData) {
-    console.log('1. createUser function started');
-    
-    try {
-        const database = client.db(dbName);
-        const users = database.collection("users");
-        
-        console.log('2. Attempting to insert user data');
-        const result = await users.insertOne(userData);
-        
-        console.log('3. User created successfully');
-        console.log('   - Inserted ID:', result.insertedId);
-        
-        return result;
-    } catch (error) {
-        console.error('4. Error in createUser function:', error);
-        throw error;
-    }
-}
+//install these two
+const bcrypt = require('bcrypt');
+const session = require('express-session');
 
-// Express route handling
-app.post('/users', async (req, res) => {
-    console.log('A. Express route /users called');
-    
-    // This is the connection client for the route
+app.use(
+    session({
+      secret: 'your_secret_key',
+      resave: false,
+      saveUninitialized: false,
+    })
+  );
+
+  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.json());
+
+// Registration route
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+  
     let client;
     try {
-        // Establish MongoDB connection
-        console.log('B. Connecting to MongoDB');
-        client = new MongoClient(uri);
-        await client.connect();
-        
-        // Get the user data from the request
-        const userData = req.body;
-        console.log('C. Received user data:', userData);
-        
-        // Call the createUser function
-        console.log('D. Calling createUser function');
-        const result = await createUser(client, userData);
-        
-        // Send successful response
-        console.log('E. Sending response back to client');
-        res.status(201).json({
-            message: 'User created successfully',
-            userId: result.insertedId
-        });
+      client = new MongoClient(uri);
+      await client.connect();
+  
+      const database = client.db(dbName);
+      const users = database.collection('users');
+  
+      // Check if user already exists
+      const existingUser = await users.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+  
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Save the user to the database
+      req.session.user = { username };
+      const result = await users.insertOne({ username, password: hashedPassword });
+      res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
     } catch (error) {
-        console.error('F. Error in route handler:', error);
-        
-        // Send error response
-        res.status(500).json({
-            message: 'Error creating user',
-            error: error.toString()
-        });
+      console.error('Error registering user:', error);
+      res.status(500).json({ message: 'Error registering user' });
     } finally {
-        // Always close the connection
-        if (client) {
-            console.log('G. Closing MongoDB connection');
-            await client.close();
-        }
+      if (client) await client.close();
     }
-});
-*/
+  });
+  
+  // Login route
+  app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+  
+    let client;
+    try {
+      client = new MongoClient(uri);
+      await client.connect();
+  
+      const database = client.db(dbName);
+      const users = database.collection('users');
+  
+      // Find the user in the database
+      const user = await users.findOne({ username });
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid username or password' });
+      }
+  
+      // Compare the entered password with the hashed password
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(400).json({ message: 'Invalid username or password' });
+      }
+  
+      // Send success response
+      req.session.user = { username };
+      res.status(200).json({ message: 'Login successful' });
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ message: 'Error during login' });
+    } finally {
+      if (client) await client.close();
+    }
+  });
 
 // Create pull history
 async function createPullHistory(client, pullData) {
@@ -219,6 +236,8 @@ app.post('/pull-history', async (req, res) => {
 // GET route to retrieve pull history
 app.get('/pull-history/:username', async (req, res) => {
     console.log('A. Express route /pull-history/:username called');
+    console.log('Session Data:', req.session);
+
     if (!req.session.user || req.session.user.username !== req.params.username) {
         return res.status(403).json({ message: 'Access denied' });
       }
@@ -303,95 +322,14 @@ function requireAuth(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'main.html'));
   });
 
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'public', 'login.html'));
-//   });
-
-// app.use(express.static(path.join(__dirname, 'public')));
-
-
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-
-app.use(
-    session({
-      secret: 'your_secret_key',
-      resave: false,
-      saveUninitialized: false,
-    })
-  );
-
-// Registration route
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-  
-    let client;
-    try {
-      client = new MongoClient(uri);
-      await client.connect();
-  
-      const database = client.db(dbName);
-      const users = database.collection('users');
-  
-      // Check if user already exists
-      const existingUser = await users.findOne({ username });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
-      }
-  
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Save the user to the database
-      req.session.user = { username };
-      const result = await users.insertOne({ username, password: hashedPassword });
-      res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
-    } catch (error) {
-      console.error('Error registering user:', error);
-      res.status(500).json({ message: 'Error registering user' });
-    } finally {
-      if (client) await client.close();
+  app.get('/', (req, res) => {
+    if (req.session && req.session.username) {
+        res.redirect('/main.html');  // Redirect to main page if logged in
+    } else {
+        res.redirect('/login.html');  // Redirect to login if not logged in
     }
-  });
-  
-  // Login route
-  app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-  
-    let client;
-    try {
-      client = new MongoClient(uri);
-      await client.connect();
-  
-      const database = client.db(dbName);
-      const users = database.collection('users');
-  
-      // Find the user in the database
-      const user = await users.findOne({ username });
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid username or password' });
-      }
-  
-      // Compare the entered password with the hashed password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return res.status(400).json({ message: 'Invalid username or password' });
-      }
-  
-      // Send success response
-      req.session.user = { username };
-      res.status(200).json({ message: 'Login successful' });
-    } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).json({ message: 'Error during login' });
-    } finally {
-      if (client) await client.close();
-    }
-  });
+});
 
-  
-
-  
 // Start the server
 const port = 3000;
 app.listen(port, () => {
