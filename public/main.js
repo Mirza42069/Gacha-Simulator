@@ -219,71 +219,74 @@ const gacha = new GachaSimulator();
 let resultDisplay = document.getElementById('resultDisplay');
 const historyDiv = document.getElementById('history');
 const usernameInput = document.getElementById('usernameInput');
-const setUsernameButton = document.getElementById('setUsernameButton');
+// const setUsernameButton = document.getElementById('setUsernameButton');
 const usernameLoggedIn = document.getElementById('usernameLoggedIn');
 
 // Add these functions to handle username storage
-function saveUsername(username) {
-    localStorage.setItem('gachaUsername', username);
-}
+// function saveUsername(username) {
+//     localStorage.setItem('gachaUsername', username);
+// }
 
-function getStoredUsername() {
-    return localStorage.getItem('gachaUsername');
-}
+// function getStoredUsername() {
+//     return localStorage.getItem('gachaUsername');
+// }
 
-function clearStoredUsername() {
-    localStorage.removeItem('gachaUsername');
-}
+// function clearStoredUsername() {
+//     localStorage.removeItem('gachaUsername');
+// }
 
 async function initializeGacha() {
-	const storedUsername = getStoredUsername();
+	// const storedUsername = getStoredUsername();
+    const loggedInUser = sessionStorage.getItem('username');
     
-    if (storedUsername) {
-        gacha.username = storedUsername;
-        usernameInput.value = storedUsername;  // Update the input field
+    if (loggedInUser) {
+        gacha.username = loggedInUser;
+        // usernameInput.value = storedUsername;  // Update the input field
         await displayPastPullHistory();  // Load history immediately
-		usernameLoggedIn.textContent = storedUsername;
+		usernameLoggedIn.textContent = loggedInUser;
+    } else {
+        window.location.href = 'login.html'
     }
 }
 
 // Username setting functionality
-setUsernameButton.addEventListener('click', async () => {
-    const username = usernameInput.value.trim();
-    if (username) {
-        gacha.username = username;
-		saveUsername(username);
-        alert(`Username set to: ${username}`);
-		usernameLoggedIn.textContent = username;
+// setUsernameButton.addEventListener('click', async () => {
+//     const username = usernameInput.value.trim();
+//     if (username) {
+//         gacha.username = username;
+// 		saveUsername(username);
+//         alert(`Username set to: ${username}`);
+// 		usernameLoggedIn.textContent = username;
 		
-		// Reset some elements as if they are newly refreshed
-		clearAllTimeouts();
-		resultDisplay.textContent = 'Klik tombol di bawah untuk memulai roll!';
-		resultDisplay.classList.remove('star-1', 'star-2', 'star-3', 'flash');
-		resultDisplay.style.backgroundColor = '';
-		gacha.currentPullIndex = 0;
-		toggleButton.disabled = false;
-		toggleButton.classList.remove('disabled');
-		toggleAnimations.stopInterval();
-		toggleAnimations.startInterval();
+// 		// Reset some elements as if they are newly refreshed
+// 		clearAllTimeouts();
+// 		resultDisplay.textContent = 'Klik tombol di bawah untuk memulai roll!';
+// 		resultDisplay.classList.remove('star-1', 'star-2', 'star-3', 'flash');
+// 		resultDisplay.style.backgroundColor = '';
+// 		gacha.currentPullIndex = 0;
+// 		toggleButton.disabled = false;
+// 		toggleButton.classList.remove('disabled');
+// 		toggleAnimations.stopInterval();
+// 		toggleAnimations.startInterval();
 		
-		if (gacha.isActive) {
-			gacha.isActive = false;
+// 		if (gacha.isActive) {
+// 			gacha.isActive = false;
 			
-			// Force remove any remaining click handlers
-			resultDisplay.replaceWith(resultDisplay.cloneNode(true));
-			// Get the fresh reference after cloning
-			resultDisplay = document.getElementById('resultDisplay');	
-		}
+// 			// Force remove any remaining click handlers
+// 			resultDisplay.replaceWith(resultDisplay.cloneNode(true));
+// 			// Get the fresh reference after cloning
+// 			resultDisplay = document.getElementById('resultDisplay');	
+// 		}
 		
-		// Clear existing history display before showing new user's history
-        historyDiv.innerHTML = '';
+// 		// Clear existing history display before showing new user's history
+//         historyDiv.innerHTML = '';
 		
-        // Fetch and display previous pull history
-        await displayPastPullHistory();
-    } else {
-        alert('Please enter a valid username');
-    }
-});
+//         // Fetch and display previous pull history
+//         await displayPastPullHistory();
+//     } else {
+//         alert('Please enter a valid username');
+//     }
+// });
 
 // Function to display past pull history
 async function displayPastPullHistory() {
@@ -431,7 +434,7 @@ function showPull(stars, character, sequenceDiv) {
 
 // Modified to handle history display
 async function startNewPullSession() {
-	const storedUsername = getStoredUsername();
+	// const storedUsername = getStoredUsername();
 	
     // Check if username is set
     if (!gacha.username) {
@@ -439,9 +442,9 @@ async function startNewPullSession() {
         return;
     }
 	
-	if (storedUsername !== gacha.username) {
-		gacha.username = storedUsername;  // Sync username if it somehow got out of sync
-	}
+	// if (storedUsername !== gacha.username) {
+	// 	gacha.username = storedUsername;  // Sync username if it somehow got out of sync
+	// }
 
     clearAllTimeouts();
     gacha.currentPulls = gacha.pullTen();

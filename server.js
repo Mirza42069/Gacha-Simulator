@@ -219,6 +219,9 @@ app.post('/pull-history', async (req, res) => {
 // GET route to retrieve pull history
 app.get('/pull-history/:username', async (req, res) => {
     console.log('A. Express route /pull-history/:username called');
+    if (!req.session.user || req.session.user.username !== req.params.username) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
     
     let client;
     try {
@@ -289,14 +292,34 @@ app.put('/pull-history/:id', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+function requireAuth(req, res, next) {
+    if (!req.session.user) {
+      return res.redirect('/login.html');
+    }
+    next();
+  }
+  
+  app.get('/main.html', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'main.html'));
   });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'public', 'login.html'));
+//   });
+
+// app.use(express.static(path.join(__dirname, 'public')));
 
 
 const bcrypt = require('bcrypt');
+const session = require('express-session');
+
+app.use(
+    session({
+      secret: 'your_secret_key',
+      resave: false,
+      saveUninitialized: false,
+    })
+  );
 
 // Registration route
 app.post('/register', async (req, res) => {
@@ -320,6 +343,7 @@ app.post('/register', async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
   
       // Save the user to the database
+      req.session.user = { username };
       const result = await users.insertOne({ username, password: hashedPassword });
       res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
     } catch (error) {
@@ -355,6 +379,7 @@ app.post('/register', async (req, res) => {
       }
   
       // Send success response
+      req.session.user = { username };
       res.status(200).json({ message: 'Login successful' });
     } catch (error) {
       console.error('Error during login:', error);
@@ -363,6 +388,8 @@ app.post('/register', async (req, res) => {
       if (client) await client.close();
     }
   });
+
+  
 
   
 // Start the server
