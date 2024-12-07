@@ -111,6 +111,7 @@ section a
     border-radius: 30px;
     cursor: pointer;
     transition: .3s;
+    margin-bottom: 15px;
 }
 
 .input-submit label 

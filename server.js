@@ -33,8 +33,11 @@ document.getElementById('createUserBtn').addEventListener('click', async () => {
 */
 
 // Backend (Node.js Express + MongoDB)
+
+require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
+
 
 const path = require('path');  // Ensures path name compatibility across different operating systems
 const app = express();
@@ -53,14 +56,61 @@ const session = require('express-session');
 
 app.use(
     session({
-      secret: 'your_secret_key',
+      secret: process.env.SESSION_KEY,
       resave: false,
       saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60,
+        secure: false,
+        httpOnly: true
+      }
     })
   );
 
-  app.use(express.static(path.join(__dirname, 'public')));
   app.use(express.json());
+
+  function requireAuth(req, res, next) {
+    if (req.session && req.session.user) {
+        next(); // User is authenticated, proceed to the next middleware
+  } else {
+        res.redirect('/login.html'); // No session, redirect to login
+  }
+  }
+
+app.get('/check-session', (req, res) => {
+    console.log(req.session);
+    if (req.session.user) {
+      res.send(`User is logged in as ${req.session.user.username}`);
+    } else {
+      res.send('No active session');
+    }
+  });
+
+app.get('/', (req, res) => {
+    console.log('Session Data:', req.session);
+    if (req.session && req.session.username) {
+        res.redirect('/main.html');  // Redirect to main page if logged in
+    } else {
+        res.redirect('/login.html');  // Redirect to login if not logged in
+    }
+});
+
+app.get('/main.html', requireAuth, (req, res) => {
+        if (req.session && req.session.user) {
+            res.sendFile(path.join(__dirname, 'main.html'));
+        } else {
+            res.redirect('/login.html');
+        }
+    });
+
+app.get('/Inventory.html', requireAuth, (req, res) => {
+        if (req.session && req.session.user) {
+            res.sendFile(path.join(__dirname, 'Inventory.html'));
+        } else {
+            res.redirect('/login.html');
+        }
+    });
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Registration route
 app.post('/register', async (req, res) => {
@@ -120,9 +170,12 @@ app.post('/register', async (req, res) => {
       }
   
       // Send success response
+      console.log('Login successful, setting session');
       req.session.user = { username };
       res.status(200).json({ message: 'Login successful' });
+
     } catch (error) {
+      console.error('Error during login:', error);
       console.error('Error during login:', error);
       res.status(500).json({ message: 'Error during login' });
     } finally {
@@ -308,25 +361,6 @@ app.put('/pull-history/:id', async (req, res) => {
             console.log('G. Closing MongoDB connection');
             await client.close();
         }
-    }
-});
-
-function requireAuth(req, res, next) {
-    if (!req.session.user) {
-      return res.redirect('/login.html');
-    }
-    next();
-  }
-  
-  app.get('/main.html', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'main.html'));
-  });
-
-  app.get('/', (req, res) => {
-    if (req.session && req.session.username) {
-        res.redirect('/main.html');  // Redirect to main page if logged in
-    } else {
-        res.redirect('/login.html');  // Redirect to login if not logged in
     }
 });
 

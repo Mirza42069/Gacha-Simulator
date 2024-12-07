@@ -24,12 +24,12 @@
             <input type="password" class="input-field" id="password" placeholder="Password" autocomplete="off" required>
         </div>
         
-        <div class="forgot">
+        <!-- <div class="forgot">
             <section>
                 <input type="checkbox" id="check">
                 <label for="check">Remember me</label>
             </section>
-        </div>
+        </div> -->
         
         <div class="input-submit">
             <button class="submit-btn" id="signup"></button>
@@ -52,6 +52,16 @@
     </div>
 
     <script src="login.js">
+        fetch('/check-session')
+    .then((response) => response.text())
+    .then((data) => {
+      if (data !== 'No active session') {
+        window.location.href = '/main.html';
+      }
+    })
+    .catch((error) => {
+      console.error('Error checking session:', error);
+    });
     </script>
 </body>
 </html>
