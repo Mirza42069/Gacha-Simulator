@@ -371,8 +371,18 @@ main p{
 }
 
 .character-image {
-  width: 100px;
-  height: 100px;
+  max-width: 100%;  
+  /* display: block; */
+  margin: 0 auto;
+}
+
+figure {
+  text-align: center;
+  margin: 1em 0;
+}
+
+figcaption {
+  margin-top: 0.5em;
 }
 
 .star-summary {

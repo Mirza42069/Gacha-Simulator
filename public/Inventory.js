@@ -1,22 +1,44 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Sample user data retrieval function (modify this if your data is stored differently)
-    function getPullHistory() {
-        // Assuming the pull history is stored in localStorage with key 'pullHistory'
-        const history = localStorage.getItem('pullHistory');
-        return history ? JSON.parse(history) : [];
+    const username = sessionStorage.getItem('username');
+    // Fetch pull history from the server
+    async function getPullHistory(username) {
+        try {
+            const response = await fetch(`/pull-history/${username}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch pull history');
+            }
+            const data = await response.json();
+            return data.pullHistory;  // Assuming the server returns pullHistory in the response body
+        } catch (error) {
+            console.error('Error fetching pull history:', error);
+            return [];
+        }
     }
 
-    // Sample character data structure (for displaying images)
+    // Character images based on rarity
     const characterImages = {
-        '3-star': 'path/to/3-star-image.png',
-        '2-star': 'path/to/2-star-image.png',
-        '1-star': 'path/to/1-star-image.png'
-    };
+        'Yoru' : 'images/yoru.jpg',
+        'Hard' : 'images/hard image.jpg',
+        'Skelly' : 'images/skelly.png',
 
-    function displayPullHistory() {
+        'MAGE X' : 'images/mage x.png',
+        'Home Page' : 'images/front page chrome.png',
+        'Tablet' : 'images/samsung tab.png',
+
+        'STNK Vitram' : 'images/stnk.png',
+        'Motor' : 'images/motor ilang.png',
+        'Gelas Kopi' : 'images/bekas kopi (1).png'
+}
+
+    async function displayPullHistory() {
+        if (!username) {
+            console.log('No user is logged in');
+            return;
+        }
+
+        const pullHistory = await getPullHistory(username);
+
         const historyContainer = document.getElementById('history');
-        const pullHistory = getPullHistory();
-
         if (pullHistory.length === 0) {
             historyContainer.innerHTML = '<p>No pulls found. Start wishing to collect characters!</p>';
             return;
@@ -53,10 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const summaryDiv = document.createElement('div');
         summaryDiv.classList.add('star-summary');
         summaryDiv.innerHTML = `
-            <h3>Summary</h3>
-            <p>3-Star Characters: ${starCounts['3-star']}</p>
-            <p>2-Star Characters: ${starCounts['2-star']}</p>
-            <p>1-Star Characters: ${starCounts['1-star']}</p>
+            <p>3★: ${starCounts['3-star']}</p>
+            <p>2★: ${starCounts['2-star']}</p>
+            <p>1★: ${starCounts['1-star']}</p>
         `;
         historyContainer.prepend(summaryDiv);
     }
@@ -64,5 +85,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call the function to display the history
     displayPullHistory();
 });
-
-

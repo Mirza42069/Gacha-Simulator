@@ -287,45 +287,45 @@ app.post('/pull-history', async (req, res) => {
 });
 
 // GET route to retrieve pull history
-app.get('/pull-history/:username', async (req, res) => {
-    console.log('A. Express route /pull-history/:username called');
-    console.log('Session Data:', req.session);
+    app.get('/pull-history/:username', async (req, res) => {
+        console.log('A. Express route /pull-history/:username called');
+        console.log('Session Data:', req.session);
 
-    if (!req.session.user || req.session.user.username !== req.params.username) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-    
-    let client;
-    try {
-        console.log('B. Connecting to MongoDB');
-        client = new MongoClient(uri);
-        await client.connect();
-        
-        const username = req.params.username;
-        console.log('C. Retrieving pull history for username:', username);
-        
-        console.log('D. Calling getPullHistory function');
-        const result = await getPullHistory(client, username);
-        
-        console.log('E. Sending response back to client');
-        res.status(200).json({
-            message: 'Pull history retrieved successfully',
-            pullHistory: result
-        });
-    } catch (error) {
-        console.error('F. Error in route handler:', error);
-        
-        res.status(500).json({
-            message: 'Error retrieving pull history',
-            error: error.toString()
-        });
-    } finally {
-        if (client) {
-            console.log('G. Closing MongoDB connection');
-            await client.close();
+        if (!req.session.user || req.session.user.username !== req.params.username) {
+            return res.status(403).json({ message: 'Access denied' });
         }
-    }
-});
+        
+        let client;
+        try {
+            console.log('B. Connecting to MongoDB');
+            client = new MongoClient(uri);
+            await client.connect();
+            
+            const username = req.params.username;
+            console.log('C. Retrieving pull history for username:', username);
+            
+            console.log('D. Calling getPullHistory function');
+            const result = await getPullHistory(client, username);
+            
+            console.log('E. Sending response back to client');
+            res.status(200).json({
+                message: 'Pull history retrieved successfully',
+                pullHistory: result
+            });
+        } catch (error) {
+            console.error('F. Error in route handler:', error);
+            
+            res.status(500).json({
+                message: 'Error retrieving pull history',
+                error: error.toString()
+            });
+        } finally {
+            if (client) {
+                console.log('G. Closing MongoDB connection');
+                await client.close();
+            }
+        }
+    });
 
 // PUT route to update pull history
 app.put('/pull-history/:id', async (req, res) => {

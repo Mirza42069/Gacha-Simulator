@@ -52,12 +52,23 @@ const toggleAnimations = setupRippleAnimation(toggleRipples);
 let isDisabled = false;
 
 const characterImages = {
+        // 'Yoru' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\yoru.jpg',
+        // 'Hard' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\hard image.jpg',
+        // 'Skelly' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\skelly.png',
+
+        // 'MAGE X' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\mage x.png',
+        // 'Home Page' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\front page chrome.png',
+        // 'Tablet' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\samsung tab.png',
+
+        // 'STNK Vitram' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\stnk.png',
+        // 'Motor' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\motor ilang.png',
+        // 'Gelas Kopi' : 'C:\Users\ideapad\OneDrive\Documents\GitHub\Gacha-Simulator\images\bekas kopi (1).png'
         'Yoru' : 'images/yoru.jpg',
         'Hard' : 'images/hard image.jpg',
         'Skelly' : 'images/skelly.png',
 
         'MAGE X' : 'images/mage x.png',
-        'Home Page' : 'images/front page chrome.png',
+        'Home Page' : 'images/front page chrome.jpg',
         'Tablet' : 'images/samsung tab.png',
 
         'STNK Vitram' : 'images/stnk.png',
@@ -70,14 +81,23 @@ function showCharacterImage(character) {
     const imageURL = characterImages[character]; // Get the image URL for the pulled character
     
     if (imageURL) {
+        const resultDisplay = document.getElementById('resultDisplay');
+        resultDisplay.innerHTML = '';
+
+        const figureElement = document.createElement('figure');
+        
         const imageElement = document.createElement('img'); // Create an <img> element
         imageElement.src = imageURL; // Set the image source
         imageElement.alt = character; // Set alt text for accessibility
         imageElement.classList.add('character-image'); // Optional: add a CSS class for styling
 
-        // Assume there's a div to display the pull result
-        const resultDisplay = document.getElementById('resultDisplay'); // Get the result display container
-        resultDisplay.appendChild(imageElement); // Append the image to the display
+        const captionElement = document.createElement('figcaption');
+        captionElement.textContent = character;
+
+        figureElement.appendChild(imageElement);
+        figureElement.appendChild(captionElement)
+        resultDisplay.appendChild(imageElement); 
+
     } else {
         console.error('Image for the character not found!');
     }
@@ -115,10 +135,6 @@ class GachaSimulator {
     }
 
     pull() {
-        // const rand = Math.random();
-        // if (rand < this.rates[3]) return 3;
-        // if (rand < this.rates[3] + this.rates[2]) return 2;
-        // return 1;
 
         const rand = Math.random();
         let rarity;
@@ -222,19 +238,6 @@ const usernameInput = document.getElementById('usernameInput');
 // const setUsernameButton = document.getElementById('setUsernameButton');
 const usernameLoggedIn = document.getElementById('usernameLoggedIn');
 
-// Add these functions to handle username storage
-// function saveUsername(username) {
-//     localStorage.setItem('gachaUsername', username);
-// }
-
-// function getStoredUsername() {
-//     return localStorage.getItem('gachaUsername');
-// }
-
-// function clearStoredUsername() {
-//     localStorage.removeItem('gachaUsername');
-// }
-
 async function initializeGacha() {
 	// const storedUsername = getStoredUsername();
     const loggedInUser = sessionStorage.getItem('username');
@@ -249,45 +252,6 @@ async function initializeGacha() {
     }
 }
 
-// Username setting functionality
-// setUsernameButton.addEventListener('click', async () => {
-//     const username = usernameInput.value.trim();
-//     if (username) {
-//         gacha.username = username;
-// 		saveUsername(username);
-//         alert(`Username set to: ${username}`);
-// 		usernameLoggedIn.textContent = username;
-		
-// 		// Reset some elements as if they are newly refreshed
-// 		clearAllTimeouts();
-// 		resultDisplay.textContent = 'Klik tombol di bawah untuk memulai roll!';
-// 		resultDisplay.classList.remove('star-1', 'star-2', 'star-3', 'flash');
-// 		resultDisplay.style.backgroundColor = '';
-// 		gacha.currentPullIndex = 0;
-// 		toggleButton.disabled = false;
-// 		toggleButton.classList.remove('disabled');
-// 		toggleAnimations.stopInterval();
-// 		toggleAnimations.startInterval();
-		
-// 		if (gacha.isActive) {
-// 			gacha.isActive = false;
-			
-// 			// Force remove any remaining click handlers
-// 			resultDisplay.replaceWith(resultDisplay.cloneNode(true));
-// 			// Get the fresh reference after cloning
-// 			resultDisplay = document.getElementById('resultDisplay');	
-// 		}
-		
-// 		// Clear existing history display before showing new user's history
-//         historyDiv.innerHTML = '';
-		
-//         // Fetch and display previous pull history
-//         await displayPastPullHistory();
-//     } else {
-//         alert('Please enter a valid username');
-//     }
-// });
-
 // Function to display past pull history
 async function displayPastPullHistory() {
     try {
@@ -300,6 +264,8 @@ async function displayPastPullHistory() {
 
         // Sort pull history by timestamp (newest first)
         pullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        let totalPulls = 0;
 
         // Display each pull session
         pullHistory.forEach(session => {
@@ -318,6 +284,14 @@ async function displayPastPullHistory() {
 
             const sequenceDiv = document.createElement('div');
             sequenceDiv.className = 'pull-sequence';
+
+            pullHistory.forEach(session => {
+                totalPulls += session.pulls.length;
+            })
+
+            localStorage.setItem('totalPulls', totalPulls.toString())
+            console.log(`pull length: ${session.pulls.length}`);
+            console.log(`Total pulls: ${totalPulls}`);
             
             // Loop through each pull in the session
             session.pulls.forEach(pull => {
@@ -339,6 +313,7 @@ async function displayPastPullHistory() {
         });
     } catch (error) {
         console.error('Error displaying pull history:', error);
+        localStorage.setItem('totalPulls', '0');
     }
 }
 
@@ -503,16 +478,16 @@ async function startNewPullSession() {
 toggleButton.addEventListener('click', startNewPullSession);
 document.addEventListener('DOMContentLoaded', initializeGacha);
 
-document.addEventListener('DOMContentLoaded', () => {
-    const username = sessionStorage.getItem('username');
-    const welcomeMessage = document.getElementById('welcomeMessage');
+// document.addEventListener('DOMContentLoaded', () => {
+//     const username = sessionStorage.getItem('username');
+//     const welcomeMessage = document.getElementById('welcomeMessage');
   
-    if (username) {
-      // Display welcome message if the user is logged in
-      welcomeMessage.innerText = `Welcome, ${username}`;
-      document.getElementById('usernameLoggedIn').textContent = username;
-    } else {
-      // Redirect to login page if no user is logged in
-      window.location.href = 'login.html';
-    }
-  });
+//     if (username) {
+//       // Display welc    ome message if the user is logged in
+//       welcomeMessage.innerText = `Welcome, ${username}`;
+//       document.getElementById('usernameLoggedIn').textContent = username;
+//     } else {
+//       // Redirect to login page if no user is logged in
+//       window.location.href = 'login.html';
+//     }
+//   });

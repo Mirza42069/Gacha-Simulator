@@ -1,20 +1,36 @@
-function logout() {
-    // Logic to handle logout
-    alert("You have been logged out.");
-    // Redirect to the login page or home page
-    window.location.href = "login.html"; // Change to your login page
-}
+// Function to get the logged-in username from localStorage and display it
+function displayUsername() {
+    const username = sessionStorage.getItem("username");
+  
+    if (username) {
+      document.getElementById("username-display").textContent = username;
+    } else {
+      // If no username is found, redirect to login page
+      window.location.href = "login.html";
+    }
+  }
+  
+  // Function to log the user out
+  function logout() {
+    sessionStorage.removeItem("username"); // Clear stored username
+    window.location.href = "login.html"; // Redirect to login page
+  }
 
+  async function getPullHistory(){
 
-const accountData = {
-    username: "MirzaGamer123",  // Example username
-    totalPulls: 128             // Example pull count
-};
+  }
+  
+  // Call displayUsername when the page loads
+  document.addEventListener("DOMContentLoaded", displayUsername);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get the username from localStorage
+    const username = localStorage.getItem('username') || 'Guest';
+    document.getElementById('username-display').textContent = username;
 
-// Function to display the data
-function displayAccountInfo() {
-    document.getElementById("username-display").textContent = accountData.username;
-    document.getElementById("pulls-display").textContent = accountData.totalPulls;
-}
+    // Get the total pulls from localStorage and display it
+    const totalPulls = localStorage.getItem('totalPulls') || '0';
+    document.getElementById('pulls-display').textContent = totalPulls;
+});
 
-displayAccountInfo();
+  
+  
