@@ -9,7 +9,8 @@
   --title-color: #ececec;
   --text-color: #ececec;
   --body-color: #F0F8FF;
-  --container-color: #68669c;
+  --container-color-2star: #ffd700;
+  --container-color-3star:#ff1493;
 
   /*========== Font and typography ==========*/
   /*.5rem = 8px | 1rem = 16px ...*/
@@ -70,7 +71,7 @@ img {
 
 .card__data {
   width: 280px;
-  background-color: var(--container-color);
+  background-color: var(--container-color-2star);
   padding: 1.5rem 2rem;
   box-shadow: 0 8px 24px hsla(0, 0%, 0%, .15);
   border-radius: 1rem;
