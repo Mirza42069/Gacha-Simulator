@@ -36,339 +36,184 @@ document.getElementById('createUserBtn').addEventListener('click', async () => {
 
 require('dotenv').config();
 const express = require('express');
-const { MongoClient } = require('mongodb');
-
-
-const path = require('path');  // Ensures path name compatibility across different operating systems
-const app = express();
-
-app.use(express.static(path.join(__dirname, 'public')));  // Serve static files from 'public' directory automatically,
-														  // with __dirname being the global directory of current module
-app.use(express.json());
-
-// Connection details
-const uri = "mongodb://localhost:27017";
-const dbName = "user_flow_demo";
-
-//install these two
+const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const path = require('path');
+
+const app = express();
+
+const mongoURI = process.env.MONGO_URI || "mongodb://mongodb:27017";
+const dbName = process.env.DB_NAME || "user_flow_demo";
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
     session({
-      secret: process.env.SESSION_KEY,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60,
-        secure: false,
-        httpOnly: true
-      }
+        secret: process.env.SESSION_KEY || "defaultsecret",
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            maxAge: 1000 * 60 * 60, // 1 hour
+            secure: false,
+            httpOnly: true
+        }
     })
-  );
+);
 
-  app.use(express.json());
-
-  function requireAuth(req, res, next) {
+// Middleware to protect routes
+function requireAuth(req, res, next) {
     if (req.session && req.session.user) {
-        next(); // User is authenticated, proceed to the next middleware
-  } else {
-        res.redirect('/login.html'); // No session, redirect to login
-  }
-  }
-
-app.get('/check-session', (req, res) => {
-    console.log(req.session);
-    if (req.session.user) {
-      res.send(`User is logged in as ${req.session.user.username}`);
-    } else {
-      res.send('No active session');
+        return next();
     }
-  });
+    res.redirect('/login.html');
+}
+
+// Helper: Connect to MongoDB
+async function connectToDatabase() {
+    const client = new MongoClient(mongoURI);
+    await client.connect();
+    return client;
+}
+
+// Routes
+app.get('/check-session', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({ message: `User is logged in as ${req.session.user.username}` });
+    } else {
+        res.status(401).json({ message: "No active session" });
+    }
+});
 
 app.get('/', (req, res) => {
-    console.log('Session Data:', req.session);
-    if (req.session && req.session.username) {
-        res.redirect('/main.html');  // Redirect to main page if logged in
+    if (req.session && req.session.user) {
+        res.redirect('/main.html');
     } else {
-        res.redirect('/login.html');  // Redirect to login if not logged in
+        res.redirect('/login.html');
     }
 });
 
 app.get('/main.html', requireAuth, (req, res) => {
-        if (req.session && req.session.user) {
-            res.sendFile(path.join(__dirname, 'main.html'));
-        } else {
-            res.redirect('/login.html');
-        }
-    });
+    res.sendFile(path.join(__dirname, 'main.html'));
+});
 
 app.get('/Inventory.html', requireAuth, (req, res) => {
-        if (req.session && req.session.user) {
-            res.sendFile(path.join(__dirname, 'Inventory.html'));
-        } else {
-            res.redirect('/login.html');
-        }
-    });
-app.use(express.static(path.join(__dirname, 'public')));
+    res.sendFile(path.join(__dirname, 'Inventory.html'));
+});
 
-// Registration route
+// Registration Route
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
-  
-    let client;
-    try {
-      client = new MongoClient(uri);
-      await client.connect();
-  
-      const database = client.db(dbName);
-      const users = database.collection('users');
-  
-      // Check if user already exists
-      const existingUser = await users.findOne({ username });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
-      }
-  
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Save the user to the database
-      req.session.user = { username };
-      const result = await users.insertOne({ username, password: hashedPassword });
-      res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
-    } catch (error) {
-      console.error('Error registering user:', error);
-      res.status(500).json({ message: 'Error registering user' });
-    } finally {
-      if (client) await client.close();
-    }
-  });
-  
-  // Login route
-  app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-  
-    let client;
-    try {
-      client = new MongoClient(uri);
-      await client.connect();
-  
-      const database = client.db(dbName);
-      const users = database.collection('users');
-  
-      // Find the user in the database
-      const user = await users.findOne({ username });
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid username or password' });
-      }
-  
-      // Compare the entered password with the hashed password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return res.status(400).json({ message: 'Invalid username or password' });
-      }
-  
-      // Send success response
-      console.log('Login successful, setting session');
-      req.session.user = { username };
-      res.status(200).json({ message: 'Login successful' });
 
-    } catch (error) {
-      console.error('Error during login:', error);
-      console.error('Error during login:', error);
-      res.status(500).json({ message: 'Error during login' });
-    } finally {
-      if (client) await client.close();
-    }
-  });
-
-// Create pull history
-async function createPullHistory(client, pullData) {
-    console.log('1. createPullHistory function started');
-    
     try {
-        const database = client.db(dbName);
-        const pullHistories = database.collection("pull_histories");
-        
-        console.log('2. Attempting to insert pull history');
-        const result = await pullHistories.insertOne(pullData);
-        
-        console.log('3. Pull history created successfully');
-        console.log('   - Inserted ID:', result.insertedId);
-        
-        return result;
-    } catch (error) {
-        console.error('4. Error in createPullHistory function:', error);
-        throw error;
-    }
-}
+        const client = await connectToDatabase();
+        const db = client.db(dbName);
+        const users = db.collection('users');
 
-// Get pull history for a username
-async function getPullHistory(client, username) {
-    console.log('1. getPullHistory function started');
-    
-    try {
-        const database = client.db(dbName);
-        const pullHistories = database.collection("pull_histories");
-        
-        console.log('2. Retrieving pull history for username');
-        const query = { username: username };
-        const result = await pullHistories.find(query).toArray();
-        
-        console.log('3. Pull history retrieved successfully');
-        return result;
-    } catch (error) {
-        console.error('4. Error in getPullHistory function:', error);
-        throw error;
-    }
-}
-
-// Update pull history
-async function updatePullHistory(client, pullId, updateData) {
-    console.log('1. updatePullHistory function started');
-    
-    try {
-        const database = client.db(dbName);
-        const pullHistories = database.collection("pull_histories");
-        
-        console.log('2. Attempting to update pull history');
-        const result = await pullHistories.updateOne(
-            { _id: new ObjectId(pullId) },
-            { $set: updateData }
-        );
-        
-        console.log('3. Pull history updated successfully');
-        return result;
-    } catch (error) {
-        console.error('4. Error in updatePullHistory function:', error);
-        throw error;
-    }
-}
-
-// POST route to create pull history
-app.post('/pull-history', async (req, res) => {
-    console.log('A. Express route /pull-history called');
-    
-    let client;
-    try {
-        console.log('B. Connecting to MongoDB');
-        client = new MongoClient(uri);
-        await client.connect();
-        
-        const pullData = req.body;
-        console.log('C. Received pull data:', pullData);
-        
-        console.log('D. Calling createPullHistory function');
-        const result = await createPullHistory(client, {
-            username: pullData.username,
-			timestamp: pullData.timestamp,
-            pulls: pullData.pulls
-        });
-        
-        console.log('E. Sending response back to client');
-        res.status(201).json({
-            message: 'Pull history created successfully',
-            pullHistoryId: result.insertedId
-        });
-    } catch (error) {
-        console.error('F. Error in route handler:', error);
-        
-        res.status(500).json({
-            message: 'Error creating pull history',
-            error: error.toString()
-        });
-    } finally {
-        if (client) {
-            console.log('G. Closing MongoDB connection');
-            await client.close();
+        const existingUser = await users.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Username already exists' });
         }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const result = await users.insertOne({ username, password: hashedPassword });
+
+        req.session.user = { username };
+        res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
+
+    } catch (error) {
+        console.error('Error during registration:', error);
+        res.status(500).json({ message: 'Error during registration' });
     }
 });
 
-// GET route to retrieve pull history
-    app.get('/pull-history/:username', async (req, res) => {
-        console.log('A. Express route /pull-history/:username called');
-        console.log('Session Data:', req.session);
+// Login Route
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
 
-        if (!req.session.user || req.session.user.username !== req.params.username) {
+    try {
+        const client = await connectToDatabase();
+        const db = client.db(dbName);
+        const users = db.collection('users');
+
+        const user = await users.findOne({ username });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: 'Invalid username or password' });
+        }
+
+        req.session.user = { username };
+        res.json({ message: 'Login successful' });
+
+    } catch (error) {
+        console.error('Error during login:', error);
+        res.status(500).json({ message: 'Error during login' });
+    }
+});
+
+// Pull History Routes
+app.post('/pull-history', requireAuth, async (req, res) => {
+    const { username, timestamp, pulls } = req.body;
+
+    try {
+        const client = await connectToDatabase();
+        const db = client.db(dbName);
+        const pullHistories = db.collection('pull_histories');
+
+        const result = await pullHistories.insertOne({ username, timestamp, pulls });
+        res.status(201).json({ message: 'Pull history created successfully', pullHistoryId: result.insertedId });
+
+    } catch (error) {
+        console.error('Error creating pull history:', error);
+        res.status(500).json({ message: 'Error creating pull history' });
+    }
+});
+
+app.get('/pull-history/:username', requireAuth, async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        if (req.session.user.username !== username) {
             return res.status(403).json({ message: 'Access denied' });
         }
-        
-        let client;
-        try {
-            console.log('B. Connecting to MongoDB');
-            client = new MongoClient(uri);
-            await client.connect();
-            
-            const username = req.params.username;
-            console.log('C. Retrieving pull history for username:', username);
-            
-            console.log('D. Calling getPullHistory function');
-            const result = await getPullHistory(client, username);
-            
-            console.log('E. Sending response back to client');
-            res.status(200).json({
-                message: 'Pull history retrieved successfully',
-                pullHistory: result
-            });
-        } catch (error) {
-            console.error('F. Error in route handler:', error);
-            
-            res.status(500).json({
-                message: 'Error retrieving pull history',
-                error: error.toString()
-            });
-        } finally {
-            if (client) {
-                console.log('G. Closing MongoDB connection');
-                await client.close();
-            }
-        }
-    });
 
-// PUT route to update pull history
-app.put('/pull-history/:id', async (req, res) => {
-    console.log('A. Express route /pull-history/:id called');
-    
-    let client;
-    try {
-        console.log('B. Connecting to MongoDB');
-        client = new MongoClient(uri);
-        await client.connect();
-        
-        const pullId = req.params.id;
-        const updateData = req.body;
-        console.log('C. Updating pull history with ID:', pullId);
-        
-        console.log('D. Calling updatePullHistory function');
-        const result = await updatePullHistory(client, pullId, updateData);
-        
-        console.log('E. Sending response back to client');
-        res.status(200).json({
-            message: 'Pull history updated successfully',
-            modifiedCount: result.modifiedCount
-        });
+        const client = await connectToDatabase();
+        const db = client.db(dbName);
+        const pullHistories = db.collection('pull_histories');
+
+        const result = await pullHistories.find({ username }).toArray();
+        res.json({ message: 'Pull history retrieved successfully', pullHistory: result });
+
     } catch (error) {
-        console.error('F. Error in route handler:', error);
-        
-        res.status(500).json({
-            message: 'Error updating pull history',
-            error: error.toString()
-        });
-    } finally {
-        if (client) {
-            console.log('G. Closing MongoDB connection');
-            await client.close();
-        }
+        console.error('Error retrieving pull history:', error);
+        res.status(500).json({ message: 'Error retrieving pull history' });
+    }
+});
+
+app.put('/pull-history/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    try {
+        const client = await connectToDatabase();
+        const db = client.db(dbName);
+        const pullHistories = db.collection('pull_histories');
+
+        const result = await pullHistories.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+        res.json({ message: 'Pull history updated successfully', modifiedCount: result.modifiedCount });
+
+    } catch (error) {
+        console.error('Error updating pull history:', error);
+        res.status(500).json({ message: 'Error updating pull history' });
     }
 });
 
 // Start the server
-const port = 3000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Server running on port ${port}`));
+
 
 // Explanation of the flow:
 /*

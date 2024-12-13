@@ -15,13 +15,25 @@ document.getElementById('login').addEventListener('click', async (e) => {
   }
 
   try {
-    const response = await fetch('/login', {  // Adjust '/login' to your actual server route
+    const response = await fetch('/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    console.log('Response Text:', responseText);
+
+    // Only parse the response if it seems to be JSON
+    let result = null;
+    try {
+      result = JSON.parse(responseText);
+    } catch (error) {
+      console.error('Failed to parse response as JSON:', error);
+      alert('An unexpected error occurred. Please try again.');
+      return;
+    }
+
     if (response.ok) {
       const token = result.token || '';  // Assuming token is returned from backend
       sessionStorage.setItem('username', username);
@@ -54,7 +66,18 @@ document.getElementById('signup').addEventListener('click', async (e) => {
       body: JSON.stringify({ username, password }),
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    console.log('Response Text:', responseText);
+
+    let result = null;
+    try {
+      result = JSON.parse(responseText);
+    } catch (error) {
+      console.error('Failed to parse response as JSON:', error);
+      alert('An unexpected error occurred. Please try again.');
+      return;
+    }
+
     if (response.ok) {
       alert('Account created successfully! Please log in.');
       window.location.href = 'login.html';  // Redirect to login page after registration
@@ -66,3 +89,18 @@ document.getElementById('signup').addEventListener('click', async (e) => {
     alert('An error occurred. Please try again.');
   }
 });
+
+async function checkSessionOnLoad() {
+  try {
+    const response = await fetch('/check-session');
+    const result = await response.json();
+
+    // If user is logged in, redirect to main.html
+    if (result.isLoggedIn) {
+      window.location.href = '/main.html';
+    }
+  } catch (error) {
+    console.error('Session check error:', error);
+  }
+}
+
