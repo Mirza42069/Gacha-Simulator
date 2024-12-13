@@ -266,6 +266,7 @@ async function displayPastPullHistory() {
         pullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         let totalPulls = 0;
+        const raritycounts = {};
 
         // Display each pull session
         pullHistory.forEach(session => {
@@ -285,13 +286,7 @@ async function displayPastPullHistory() {
             const sequenceDiv = document.createElement('div');
             sequenceDiv.className = 'pull-sequence';
 
-            pullHistory.forEach(session => {
-                totalPulls += session.pulls.length;
-            })
-
-            localStorage.setItem('totalPulls', totalPulls.toString())
-            console.log(`pull length: ${session.pulls.length}`);
-            console.log(`Total pulls: ${totalPulls}`);
+            totalPulls += session.pulls.length;
             
             // Loop through each pull in the session
             session.pulls.forEach(pull => {
@@ -300,6 +295,11 @@ async function displayPastPullHistory() {
                 pullDiv.textContent = `${pull.character} (${pull.rarity}★)`;  // Corrected display
 
                 sequenceDiv.appendChild(pullDiv);
+
+                if (!raritycounts[pull.rarity]){
+                    raritycounts[pull.rarity] = 0;
+                }
+                raritycounts[pull.rarity] += 1 ;
                 
                 // Force reflow and add visible class for animation
                 setTimeout(() => {
@@ -311,6 +311,12 @@ async function displayPastPullHistory() {
             groupDiv.appendChild(sequenceDiv);
             historyDiv.appendChild(groupDiv);
         });
+
+        localStorage.setItem('totalPulls', totalPulls.toString());
+        localStorage.setItem('raritycounts', JSON.stringify(raritycounts));
+        // console.log(`pull length: ${session.pulls.length}`);
+        console.log(`Total pulls: ${totalPulls}`);
+
     } catch (error) {
         console.error('Error displaying pull history:', error);
         localStorage.setItem('totalPulls', '0');

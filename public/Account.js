@@ -23,8 +23,8 @@ function displayUsername() {
   // Call displayUsername when the page loads
   document.addEventListener("DOMContentLoaded", displayUsername);
   document.addEventListener('DOMContentLoaded', () => {
-    // Get the username from localStorage
-    const username = localStorage.getItem('username') || 'Guest';
+   
+    const username = sessionStorage.getItem('username') || 'Guest';
     document.getElementById('username-display').textContent = username;
 
     // Get the total pulls from localStorage and display it

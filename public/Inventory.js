@@ -28,60 +28,36 @@ document.addEventListener('DOMContentLoaded', () => {
         'STNK Vitram' : 'images/stnk.png',
         'Motor' : 'images/motor ilang.png',
         'Gelas Kopi' : 'images/bekas kopi (1).png'
-}
+}   
+        // Function to display rarity counts and pull history
 
-    async function displayPullHistory() {
-        if (!username) {
-            console.log('No user is logged in');
-            return;
-        }
+    const historyDiv = document.getElementById('history');
 
-        const pullHistory = await getPullHistory(username);
+    // Retrieve pull history and rarity counts from localStorage
+    const rarityCounts = JSON.parse(localStorage.getItem('raritycounts'));
+    const totalPulls = localStorage.getItem('totalPulls');
 
-        const historyContainer = document.getElementById('history');
-        if (pullHistory.length === 0) {
-            historyContainer.innerHTML = '<p>No pulls found. Start wishing to collect characters!</p>';
-            return;
-        }
-
-        let starCounts = {
-            '3-star': 0,
-            '2-star': 0,
-            '1-star': 0
-        };
-
-        // Create elements to display each character and count stars
-        pullHistory.forEach(pull => {
-            const { name, rarity } = pull;
-
-            // Count the rarity
-            if (rarity === '3-star') starCounts['3-star']++;
-            else if (rarity === '2-star') starCounts['2-star']++;
-            else if (rarity === '1-star') starCounts['1-star']++;
-
-            // Create a div to display the character
-            const charDiv = document.createElement('div');
-            charDiv.classList.add('character-card');
-
-            charDiv.innerHTML = `
-                <img src="${characterImages[rarity]}" alt="${name}" class="character-image">
-                <p>${name} - ${rarity}</p>
-            `;
-
-            historyContainer.appendChild(charDiv);
-        });
-
-        // Display summary of star counts
-        const summaryDiv = document.createElement('div');
-        summaryDiv.classList.add('star-summary');
-        summaryDiv.innerHTML = `
-            <p>3★: ${starCounts['3-star']}</p>
-            <p>2★: ${starCounts['2-star']}</p>
-            <p>1★: ${starCounts['1-star']}</p>
-        `;
-        historyContainer.prepend(summaryDiv);
+    if (!rarityCounts || totalPulls === null) {
+        historyDiv.innerHTML = '<p>No pull history found.</p>';
+        return;
     }
 
+    // Display total pulls
+    const totalPullsDiv = document.createElement('div');
+    totalPullsDiv.innerHTML = `<h3>Total Pulls: ${totalPulls}</h3>`;
+    historyDiv.appendChild(totalPullsDiv);
+
+    // Display rarity counts
+    const raritySummaryDiv = document.createElement('div');
+    raritySummaryDiv.innerHTML = '<h3>Pull Summary by Rarity:</h3>';
+    Object.keys(rarityCounts).sort().forEach(rarity => {
+        const rarityDiv = document.createElement('div');
+        rarityDiv.textContent = `${rarity}★: ${rarityCounts[rarity]} `;
+        raritySummaryDiv.appendChild(rarityDiv);
+    });
+    historyDiv.appendChild(raritySummaryDiv);
+
+
     // Call the function to display the history
-    displayPullHistory();
+    
 });
