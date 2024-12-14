@@ -103,14 +103,6 @@ function showCharacterImage(character) {
     }
 }
 
-// // Example of pulling a character and showing its image
-// function handlePullResult(characterName) {
-//     // Show the character's image based on the pull result
-//     showCharacterImage(characterName);
-
-//     // Continue with your existing code for showing the pull results (rarity, etc.)
-// }
-
 class GachaSimulator {
     constructor() {
         this.rates = {

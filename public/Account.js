@@ -14,6 +14,8 @@ function displayUsername() {
   function logout() {
     sessionStorage.removeItem("username"); // Clear stored username
     window.location.href = "login.html"; // Redirect to login page
+    localStorage.removeItem('totalPulls');
+    localStorage.removeItem('raritycount');
   }
 
   async function getPullHistory(){
